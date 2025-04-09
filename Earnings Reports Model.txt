@@ -1,0 +1,68 @@
+def predict_return():
+    score=0
+   
+    score+=fog(mda)
+    
+    try:
+        first_sentence=sentence_tokenize(mda)[0]
+        score+=sentiment(first_sentence)*3
+    except:
+        pass
+    try:
+        second_sentence=sentence_tokenize(mda)[1]
+        score+=sentiment(second_sentence)*2
+    except:
+        pass
+    try:
+        third_sentence=sentence_tokenize(mda)[2]
+        score+=sentiment(third_sentence)
+    except:
+        pass
+    try:
+        last_sentence=sentence_tokenize(mda)[-1]
+        score+=sentiment(last_sentence)
+    except:
+        pass
+    
+    if p5d_market_perf<0:
+        score-=abs(p5d_market_perf)*100
+    if p5d_market_perf>0:
+        score+=abs(p5d_market_perf)*100
+    if p5d_firm_perf<0:
+        score+=abs(p5d_firm_perf)*100
+    if p5d_firm_perf>0:
+        score-=abs(p5d_firm_perf)*100  
+    score+=float(py_pe_ratio)*2
+    
+    wordlist = word_tokenize(mda)
+    
+    pos_words=['sufficient','satisfy','earnings','dollar', 'increased', 
+           'grew', 'compared', 'added', 'expect', 'continue', 'strong', 
+           'well', 'solid', 'key', 'advancement', 'growth', 'strength', 'improvement',
+           'exceeded', 'met', 'meeting', 'forward', 'increase', 'increasing', 
+           'consolidated', 'gain', 'profit', 'continued', 'positive']
+    neg_words=['lower','projects','legal','fiscal','decrease', 'cost', 'down', 
+           'strategy','business', 'covid', 'coronavirus', 'uncertainty', 'loss',
+           'adverse', 'concern', 'decrease', 'decline', 'downturn', 'abandoned',
+            'volatile', 'volatility', 'delay', 'postpone', 'paid', 'pandemic', 'discontinued', 
+            'negative']
+    pos_phrase=['strategic advancement', 'increased revenue']
+    neg_phrase=['COVID 19']
+    for phrase in pos_phrase:
+        score+=mda.count(phrase)*2
+    for phrase in neg_phrase:
+        score-=mda.count(phrase)*2
+    for word in pos_words:
+        score+=wordlist.count(word)*3
+    for word in neg_words:
+        score-=wordlist.count(word)*3
+        
+    score=score/100
+    
+    if score>1:
+        score=1
+    if score<-1:
+        score=-1
+    
+    return score
+

@@ -1,0 +1,144 @@
+
+import re
+import nltk
+import sys
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+def syl(word):
+    word = word.lower()
+    count = 0
+    vowels = 'aeiouy'
+    if word[0] in vowels:
+        count += 1
+    for i in range(1, len(word)):
+        if word[i] in vowels and word[i - 1] not in vowels:
+            count += 1
+    if word[-1] == 'e':
+        count -= 1
+    if count == 0:
+        count += 1
+    return count
+
+def word_tokenize(text):
+    text = text.lower()
+    text = re.sub('[^\w\s]', '', text)
+    return text.split()
+
+def sentence_tokenize(text):
+    from nltk import sent_tokenize
+    return sent_tokenize(text)
+
+def fog(text):
+    if isinstance(text, int):
+        return str(text)
+    elif not isinstance(text, str):
+        raise TypeError("input must be a string")
+    
+    t_list = word_tokenize(text) if isinstance(text, str) else []
+    word_count = len(t_list)
+    complex_count = 0
+    for word in t_list:
+        if syl(word) >= 3:
+            complex_count += 1
+    sentences = len(sentence_tokenize(text))
+    fog_index = 0.4 * ((word_count / sentences) + (100 * (complex_count / word_count)))
+    return round(fog_index, 2) if fog_index >= 0 else sys.maxsize
+
+def sentiment(text):
+    return SentimentIntensityAnalyzer().polarity_scores(text)['compound']
+
+def calculate_length_score(actual_length, optimal_length):
+    length_difference = abs(actual_length - optimal_length)
+    normalized_difference = length_difference / optimal_length
+    length_score = 1 - normalized_difference
+    return max(0, length_score)
+
+def length_analysis(text, optimal_length):
+    actual_length = len(text)
+    return calculate_length_score(actual_length, optimal_length)
+
+def kick_predict(text):
+    score = 0
+    
+    text=text.lower()
+    
+    risks_indicator = 'risks and challenges'
+    risks_start = text.find(risks_indicator)
+    
+    if risks_start != -1:
+        story = text[:risks_start]
+        risks_end = text.find('learn about accountability on kickstarter', risks_start)
+        risks = text[risks_start:risks_end] if risks_end != -1 else text[risks_start:]
+    else:
+        story = text
+        risks = ''
+        v
+    text_length_score = length_analysis(text, optimal_length=1700)
+    risks_length_score = length_analysis(risks, optimal_length=1100)
+    
+    score += text_length_score
+    score += risks_length_score
+    
+    score += fog(text)
+    
+    
+    wordlist = word_tokenize(story)
+    
+    pos_words = ['large', 'maker', 'access', 'ring', 'wallet', 'community',
+                 'designer', 'compact', 'design', 'compatible', 'super',
+                 'arduino', 'powerful', 'excite', 'python', 'launch', 'deliver',
+                 'amazing', 'pen', 'titanium', 'tiny', 'perfect', 'volunteer',
+                 'silicone', 'learn', 'duo', 'vessel', 'smart', 'workshop',
+                 'orignal', 'add', 'thank', 'include', 'press', 'unlock',
+                 'campaign', 'founder', 'update', 'receive', 'backer']
+    neg_words = ['idea', 'prototype', 'sport', 'patent', 'application', 'user', 'market',
+                 'ability', 'concept', 'funding', 'platform', 'money', 'site',
+                 'plan', 'company', 'service', 'individual', 'provide', 'intend', 'website',
+                 'view', 'unit', 'area', 'child', 'profile', 'contact', 'vehicle', 
+                 'finance', 'financial', 'budget', 'inventor',
+                 'invention', 'fishing', 'industry', 'purpose', 'case', 'environment', 'person', 'ride']
+    pos_phrase = ['campaign end', 'open source', 'stretch goal', 'need help', 'past year', 'super easy']
+    neg_phrase = ['social medium']
+    encour_phrase = ['pledgers will', 'receive a', 'receive the', 'be listed', 'also', 'receive', 'get a ', 
+                     'be included', 'be given', 'be receiving', 'project will be', 'has pledged', 'difference for',
+                     'pledged will', 'around new', 'to build this', 'mention your', 'also receive two', 
+                     'your continued', 'we can afford', 'that exists']
+    discour_phrase = ['even a dollar', 'pledged', 'not been able', 'models of', 'information at', 
+                      'dressed up', 'trusting', 'based in', 'that uses', 'new form', 'later I', 
+                      'hope to get', 'need one','provide us']
+    for phrase in pos_phrase:
+        score += wordlist.count(phrase) * 4
+    for phrase in neg_phrase:
+        score -= wordlist.count(phrase) * 2
+    for word in pos_words:
+        score += wordlist.count(word) * 5
+    for word in neg_words:
+        score -= wordlist.count(word) * 2
+    for phrase in encour_phrase:
+        score += wordlist.count(phrase) * 5
+    for phrase in discour_phrase:
+        score -= wordlist.count(phrase) * 3
+    
+    
+    score = score / 100
+    
+    if score > 1:
+        score = 1
+    if score < 1 and score > 0.5:
+        score = 1
+    if score < 0.5:
+        score = 0
+    
+    return score
+
+def open_kick(file):
+    f = open('/Users/utecht/Desktop/BUS306/' + str(file) + '.txt', 'r', encoding='utf-8')
+    return str(f.read())
+
+for file in fail_list:
+        description = open_kick(file)
+        print(str(file) + ', ' + str(kick_predict(description)))
+
+for file in success_list:
+    description = open_kick(file)
+    print(str(file) + ', ' + str(kick_predict(description)))
